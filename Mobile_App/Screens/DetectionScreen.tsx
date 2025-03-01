@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
     margin: 0,                // Remove margin
   },
   title: {
-    fontSize: 27,
+    fontSize: 25,
     color: "#000",
     fontFamily: "BebasNeue-Regular",
     marginTop: 40,

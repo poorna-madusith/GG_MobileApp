@@ -9,11 +9,12 @@ import {
   Image,
   Alert
 } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import * as authService from '../services/authService';
+import BackgroundPattern from '../components/BackgroundPattern';
 
 const UserProfileScreen = () => {
   const navigation = useNavigation();
@@ -21,6 +22,7 @@ const UserProfileScreen = () => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const isFocused = useIsFocused();
 
   // Fetch user data
   const fetchUserData = async () => {
@@ -66,8 +68,10 @@ const UserProfileScreen = () => {
   };
 
   useEffect(() => {
-    fetchUserData();
-  }, []);
+    if (isFocused) {
+      fetchUserData();
+    }
+  }, [isFocused]);
 
   // Refresh data when returning from EditProfile screen
   useEffect(() => {
@@ -133,56 +137,58 @@ const UserProfileScreen = () => {
       </View>
 
       <ScrollView style={styles.container}>
-        <View style={styles.profileCard}>
-          <View style={styles.profileHeader}>
-            <View style={styles.avatarContainer}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {userDisplayData.fullName.charAt(0).toUpperCase()}
-                </Text>
+        <View style={styles.profileContainer}>
+          <View style={styles.userInfoContainer}>
+            <View style={styles.profileHeader}>
+              <View style={styles.avatarContainer}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>
+                    {userDisplayData.fullName.charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.userName}>{userDisplayData.fullName}</Text>
+              <Text style={styles.userPhone}>{userDisplayData.phoneNumber}</Text>
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.infoSection}>
+              <Text style={styles.sectionTitle}>Personal Information</Text>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Age:</Text>
+                <Text style={styles.infoValue}>{userDisplayData.age}</Text>
+              </View>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Address:</Text>
+                <Text style={styles.infoValue}>{userDisplayData.address}</Text>
               </View>
             </View>
-            <Text style={styles.userName}>{userDisplayData.fullName}</Text>
-            <Text style={styles.userPhone}>{userDisplayData.phoneNumber}</Text>
-          </View>
 
-          <View style={styles.divider} />
+            <View style={styles.divider} />
 
-          <View style={styles.infoSection}>
-            <Text style={styles.sectionTitle}>Personal Information</Text>
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Age:</Text>
-              <Text style={styles.infoValue}>{userDisplayData.age}</Text>
+            <View style={styles.infoSection}>
+              <Text style={styles.sectionTitle}>Selected Crops</Text>
+              {userDisplayData.selectedCrops.map((crop, index) => (
+                <View key={index} style={styles.cropItem}>
+                  <MaterialCommunityIcons
+                    name="leaf"
+                    size={16}
+                    color="#22c55e"
+                    style={styles.cropIcon}
+                  />
+                  <Text style={styles.cropText}>{crop}</Text>
+                </View>
+              ))}
             </View>
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Address:</Text>
-              <Text style={styles.infoValue}>{userDisplayData.address}</Text>
-            </View>
+            
+            <TouchableOpacity 
+              style={styles.editButton}
+              onPress={handleEditProfile}
+            >
+              <Text style={styles.editButtonText}>Edit Profile</Text>
+            </TouchableOpacity>
           </View>
-
-          <View style={styles.divider} />
-
-          <View style={styles.infoSection}>
-            <Text style={styles.sectionTitle}>Selected Crops</Text>
-            {userDisplayData.selectedCrops.map((crop, index) => (
-              <View key={index} style={styles.cropItem}>
-                <MaterialCommunityIcons
-                  name="leaf"
-                  size={16}
-                  color="#22c55e"
-                  style={styles.cropIcon}
-                />
-                <Text style={styles.cropText}>{crop}</Text>
-              </View>
-            ))}
-          </View>
-          
-          <TouchableOpacity 
-            style={styles.editButton}
-            onPress={handleEditProfile}
-          >
-            <Text style={styles.editButtonText}>Edit Profile</Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </LinearGradient>
@@ -195,9 +201,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    backgroundColor: '#fff',
   },
   header: {
     flexDirection: 'row',
@@ -249,16 +253,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  profileCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
-    margin: 20,
+  profileContainer: {
     padding: 20,
+  },
+  userInfoContainer: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    marginBottom: 20,
+    elevation: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
   },
   profileHeader: {
     alignItems: 'center',

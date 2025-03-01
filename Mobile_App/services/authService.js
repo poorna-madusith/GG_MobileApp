@@ -221,70 +221,33 @@ export const getStoredUserData = async () => {
 
 /**
  * Update user profile
- * @param {Object} userData - User profile data to update
+ * @param {Object} userData - User data to update
  * @returns {Promise} - Promise with update result
  */
-export const updateProfile = async (userData) => {
+export const updateUserProfile = async (userData) => {
   try {
-    console.log('Updating profile with data:', userData);
+    const token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
     
-    // Try to update with backend API
-    try {
-      const response = await api.put('/auth/profile', userData);
-      
-      console.log('Profile update response:', JSON.stringify(response.data, null, 2));
-      
-      if (response.data.success) {
-        // Update stored user data with updated profile
-        await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(response.data.user));
-        console.log('Updated stored user data with updated profile');
-        
-        return { success: true, user: response.data.user };
-      }
-    } catch (apiError) {
-      console.log('API update failed, falling back to local storage:', apiError.message);
-      
-      // If backend API fails, update local storage only
-      // Get current stored user data
-      const storedUserData = await getStoredUserData();
-      
-      if (!storedUserData) {
-        return { 
-          success: false, 
-          message: 'Could not update profile: no stored user data found' 
-        };
-      }
-      
-      // Create updated user data object
-      const updatedUser = {
-        ...storedUserData,
-        fullName: userData.fullName,
-        age: userData.age,
-        address: userData.address,
-        selectedCrops: userData.selectedCrops
-      };
-      
-      // Store updated data in AsyncStorage
-      await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(updatedUser));
-      console.log('Updated local user data only');
-      
-      return { 
-        success: true, 
-        user: updatedUser, 
-        localOnly: true,
-        statusCode: apiError.response?.status
-      };
+    if (!token) {
+      return { success: false, message: 'Authentication required' };
     }
-    
-    return { 
-      success: false, 
-      message: 'Failed to update profile' 
-    };
+
+    const response = await api.put('/auth/update-profile', userData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (response.data.success) {
+      // Update stored user data
+      await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(response.data.user));
+      return { success: true, user: response.data.user };
+    } else {
+      return { success: false, message: response.data.message };
+    }
   } catch (error) {
-    console.error('Update profile error:', error);
+    console.error('Profile update error:', error);
     return { 
       success: false, 
-      message: error.response?.data?.message || 'Network error updating profile'
+      message: error.response?.data?.message || 'Error updating profile'
     };
   }
 };
@@ -293,9 +256,8 @@ export default {
   register,
   login,
   getUserProfile,
-  getProfile: getUserProfile, // Alias for compatibility
   isLoggedIn,
   logout,
   getStoredUserData,
-  updateProfile
+  updateUserProfile
 };

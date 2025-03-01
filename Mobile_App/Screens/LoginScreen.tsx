@@ -17,46 +17,47 @@ const LoginScreen = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleLogin = async () => {
     if (!phoneNumber || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      setError('Phone number and password are required');
       return;
     }
 
+    setError(''); // Clear any previous errors
     setLoading(true);
-    
+
     try {
-      // Call the login API
-      const result = await authService.login(phoneNumber, password);
+      const response = await authService.login(phoneNumber, password);
       
-      if (result.success) {
-        if (result.localOnly) {
-          // This is a local-only login (for development)
-          Alert.alert(
-            'Local Login',
-            'Logged in using local storage. Server connection unavailable.',
-            [{ text: 'OK', onPress: () => navigation.navigate('Home') }]
-          );
-        } else {
-          // This is a server-authenticated login
-          Alert.alert(
-            'Success',
-            'Login successful!',
-            [{ text: 'OK', onPress: () => navigation.navigate('Home') }]
-          );
-        }
+      if (response.success) {
+        // Handle successful login
+        navigation.replace('Home'); // or wherever your main app screen is
       } else {
-        // Handle specific error codes
-        if (result.statusCode === 404) {
-          Alert.alert('Server Error', 'The login service is unavailable. The backend may be offline.');
-        } else {
-          Alert.alert('Error', result.message || 'Login failed');
+        // Show specific error message from server
+        setError(response.message);
+        
+        // If no account exists, show sign up option
+        if (response.message.includes('Please sign up')) {
+          Alert.alert(
+            'Account Not Found',
+            'Would you like to create a new account?',
+            [
+              {
+                text: 'Cancel',
+                style: 'cancel'
+              },
+              {
+                text: 'Sign Up',
+                onPress: () => navigation.navigate('Signup')
+              }
+            ]
+          );
         }
       }
     } catch (error) {
-      console.error('Login error:', error);
-      Alert.alert('Error', 'An unexpected error occurred');
+      setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -67,6 +68,10 @@ const LoginScreen = () => {
       <BackgroundPattern opacity={0.8} />
       
       <Text style={styles.title}>Login</Text>
+      
+      {error ? (
+        <Text style={styles.errorText}>{error}</Text>
+      ) : null}
       
       <View style={styles.formBox}>
         <TextInput
@@ -90,9 +95,11 @@ const LoginScreen = () => {
           onPress={handleLogin}
           disabled={loading}
         >
-          <Text style={styles.loginButtonText}>
-            {loading ? <ActivityIndicator size="small" color="#000000" /> : 'Login'}
-          </Text>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.loginButtonText}>Login</Text>
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity 
@@ -156,6 +163,12 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontFamily: 'RobotoCondensed-Regular',
   },
+  errorText: {
+    color: '#dc3545',
+    fontSize: 14,
+    marginBottom: 15,
+    textAlign: 'center',
+  }
 });
 
 export default LoginScreen;

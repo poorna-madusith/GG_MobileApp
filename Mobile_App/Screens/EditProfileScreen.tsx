@@ -1,271 +1,240 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TextInput,
   TouchableOpacity,
+  ScrollView,
   Alert,
   ActivityIndicator,
-  Platform
 } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import LinearGradient from 'react-native-linear-gradient';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import BackgroundPattern from '../components/BackgroundPattern';
 import * as authService from '../services/authService';
 
-// Custom MultiSelect component for crops
-const MultiSelect = ({ items, selectedItems, onSelectionChange }) => {
-  const toggleItem = (item) => {
-    if (selectedItems.includes(item)) {
-      onSelectionChange(selectedItems.filter(i => i !== item));
+const AVAILABLE_CROPS = [
+  'Tea',
+  'Rubber',
+  'Coconut',
+  'Cinnamon',
+  'Rice',
+  'Black Pepper'
+];
+
+const EditProfileScreen = ({ route, navigation }) => {
+  const { userData } = route.params;
+  const [formData, setFormData] = useState({
+    fullName: userData.fullName || '',
+    age: userData.age ? String(userData.age) : '',
+    address: userData.address || '',
+  });
+  const [selectedCrops, setSelectedCrops] = useState(userData.selectedCrops || []);
+  const [loading, setLoading] = useState(false);
+
+  const toggleCropSelection = (crop) => {
+    if (selectedCrops.includes(crop)) {
+      setSelectedCrops(selectedCrops.filter(item => item !== crop));
     } else {
-      onSelectionChange([...selectedItems, item]);
+      setSelectedCrops([...selectedCrops, crop]);
     }
   };
 
-  return (
-    <View style={styles.multiSelectContainer}>
-      {items.map((item) => (
-        <TouchableOpacity
-          key={item}
-          style={[
-            styles.cropItem,
-            selectedItems.includes(item) && styles.selectedCropItem
-          ]}
-          onPress={() => toggleItem(item)}
-        >
-          <Text style={selectedItems.includes(item) ? styles.selectedCropText : styles.cropText}>
-            {item}
-          </Text>
-          {selectedItems.includes(item) && (
-            <MaterialCommunityIcons name="check" size={16} color="#fff" />
-          )}
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-};
-
-const EditProfileScreen = () => {
-  const navigation = useNavigation();
-  const route = useRoute();
-  const userData = route.params?.userData || {};
-
-  const [fullName, setFullName] = useState(userData.fullName || '');
-  const [age, setAge] = useState(userData.age ? String(userData.age) : '');
-  const [address, setAddress] = useState(userData.address || '');
-  const [selectedCrops, setSelectedCrops] = useState(userData.selectedCrops || []);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Crop options - same as in signup screen
-  const cropOptions = [
-    'Rice', 'Tea', 'Rubber', 'Coconut', 'Spices',
-    'Vegetables', 'Fruits', 'Coffee', 'Black Pepper', 'Cinnamon'
-  ];
-
-  // Save profile changes
-  const handleSave = async () => {
-    if (!fullName.trim()) {
-      Alert.alert('Error', 'Please enter your full name');
+  const handleUpdate = async () => {
+    if (!formData.fullName.trim()) {
+      Alert.alert('Error', 'Name is required');
       return;
     }
-    
-    if (age && isNaN(parseInt(age))) {
-      Alert.alert('Error', 'Age must be a number');
-      return;
-    }
-    
+
+    setLoading(true);
     try {
-      setIsLoading(true);
-      
-      // Create updated user data
-      const updatedUserData = {
-        fullName: fullName.trim(),
-        age: age ? parseInt(age) : null,
-        address: address.trim(),
+      const updateData = {
+        ...formData,
+        age: formData.age ? parseInt(formData.age) : null,
         selectedCrops
       };
-      
-      console.log('Updating profile with data:', updatedUserData);
-      
-      // Call the backend API to update the profile
-      const result = await authService.updateProfile(updatedUserData);
+
+      const result = await authService.updateUserProfile(updateData);
       
       if (result.success) {
-        let message = 'Profile updated successfully';
-        
-        // If local only update, show a different message
-        if (result.localOnly) {
-          message = 'Profile updated locally only. Changes will be synced with the server when connection is available.';
-        }
-        
         Alert.alert(
           'Success',
-          message,
-          [{ text: 'OK', onPress: () => navigation.navigate('Profile', { refresh: true }) }]
+          'Profile updated successfully',
+          [{ 
+            text: 'OK', 
+            onPress: () => navigation.goBack()
+          }]
         );
       } else {
         Alert.alert('Error', result.message || 'Failed to update profile');
       }
     } catch (error) {
-      console.error('Error updating profile:', error);
-      Alert.alert('Error', 'An unexpected error occurred while updating profile');
+      Alert.alert('Error', 'An unexpected error occurred');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <LinearGradient
-        colors={['#4c669f', '#3b5998', '#192f6a']}
-        style={styles.headerGradient}
-      >
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Icon name="arrow-back" size={24} color="#fff" />
+    <View style={styles.container}>
+      <BackgroundPattern />
+      <ScrollView style={styles.scrollView}>
+        <View style={styles.formContainer}>
+          <Text style={styles.title}>Edit Profile</Text>
+          
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Full Name *</Text>
+            <TextInput
+              style={styles.input}
+              value={formData.fullName}
+              onChangeText={(text) => setFormData({...formData, fullName: text})}
+              placeholder="Enter your full name"
+              placeholderTextColor="#666"
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Age</Text>
+            <TextInput
+              style={styles.input}
+              value={formData.age}
+              onChangeText={(text) => setFormData({...formData, age: text})}
+              placeholder="Enter your age"
+              placeholderTextColor="#666"
+              keyboardType="numeric"
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Address</Text>
+            <TextInput
+              style={[styles.input, styles.multilineInput]}
+              value={formData.address}
+              onChangeText={(text) => setFormData({...formData, address: text})}
+              placeholder="Enter your address"
+              placeholderTextColor="#666"
+              multiline
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Selected Crops</Text>
+            <View style={styles.cropsContainer}>
+              {AVAILABLE_CROPS.map((crop) => (
+                <TouchableOpacity
+                  key={crop}
+                  style={[
+                    styles.cropButton,
+                    selectedCrops.includes(crop) && styles.cropButtonSelected
+                  ]}
+                  onPress={() => toggleCropSelection(crop)}
+                >
+                  <Text style={[
+                    styles.cropButtonText,
+                    selectedCrops.includes(crop) && styles.cropButtonTextSelected
+                  ]}>
+                    {crop}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <TouchableOpacity 
+            style={styles.button}
+            onPress={handleUpdate}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Update Profile</Text>
+            )}
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Edit Profile</Text>
-          <View style={{ width: 24 }} /> {/* Empty view for spacing */}
         </View>
-      </LinearGradient>
-
-      <View style={styles.formContainer}>
-        <Text style={styles.label}>Full Name</Text>
-        <TextInput
-          style={styles.input}
-          value={fullName}
-          onChangeText={setFullName}
-          placeholder="Enter your full name"
-        />
-
-        <Text style={styles.label}>Age</Text>
-        <TextInput
-          style={styles.input}
-          value={age}
-          onChangeText={setAge}
-          placeholder="Enter your age"
-          keyboardType="numeric"
-        />
-
-        <Text style={styles.label}>Address</Text>
-        <TextInput
-          style={styles.input}
-          value={address}
-          onChangeText={setAddress}
-          placeholder="Enter your address"
-          multiline
-        />
-
-        <Text style={styles.label}>Select Crops</Text>
-        <Text style={styles.subLabel}>
-          Choose the crops you cultivate
-        </Text>
-        <MultiSelect
-          items={cropOptions}
-          selectedItems={selectedCrops}
-          onSelectionChange={setSelectedCrops}
-        />
-
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={handleSave}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <Text style={styles.saveButtonText}>Save Changes</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fff',
   },
-  headerGradient: {
-    paddingTop: Platform.OS === 'ios' ? 40 : 0,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 15,
-  },
-  backButton: {
-    padding: 5,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
+  scrollView: {
+    flex: 1,
   },
   formContainer: {
     padding: 20,
+    marginTop: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 30,
+    textAlign: 'center',
+  },
+  inputContainer: {
+    marginBottom: 20,
   },
   label: {
     fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: 15,
-    marginBottom: 5,
-  },
-  subLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 10,
+    marginBottom: 8,
+    color: '#333',
+    fontWeight: '500',
   },
   input: {
-    backgroundColor: '#fff',
-    borderRadius: 5,
-    padding: 12,
     borderWidth: 1,
     borderColor: '#ddd',
-    marginBottom: 10,
-  },
-  multiSelectContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 20,
-  },
-  cropItem: {
-    backgroundColor: '#f0f0f0',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    margin: 5,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  selectedCropItem: {
-    backgroundColor: '#4c669f',
-  },
-  cropText: {
+    borderRadius: 10,
+    padding: 15,
+    fontSize: 16,
+    backgroundColor: '#f8f9fa',
     color: '#333',
   },
-  selectedCropText: {
-    color: '#fff',
-    marginRight: 5,
+  multilineInput: {
+    height: 100,
+    textAlignVertical: 'top',
   },
-  saveButton: {
-    backgroundColor: '#4c669f',
-    borderRadius: 5,
+  cropsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  cropButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#28a745',
+    backgroundColor: 'transparent',
+  },
+  cropButtonSelected: {
+    backgroundColor: '#28a745',
+    borderColor: '#28a745',
+  },
+  cropButtonText: {
+    color: '#28a745',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  cropButtonTextSelected: {
+    color: '#fff',
+  },
+  button: {
+    backgroundColor: '#28a745',
     padding: 15,
+    borderRadius: 10,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 30,
+    elevation: 2,
   },
-  saveButtonText: {
+  buttonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
 });
 
-export default EditProfileScreen;
+export default EditProfileScreen; 
