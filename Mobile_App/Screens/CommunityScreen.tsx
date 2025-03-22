@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface Post {
@@ -16,90 +17,90 @@ interface Post {
 const CommunityScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
-  const [posts, setPosts] = useState<Post[]>([
-    {
-      id: '1',
-      userId: 'user1',
-      user: 'Farmer123',
-      content: 'Anyone experiencing leaf curl in citrus plants?',
-      likes: 12,
-      comments: 4,
-      avatar: 'https://picsum.photos/200',
-    },
-    {
-      id: '2',
-      userId: 'user2',
-      user: 'AgriExpert',
-      content: 'New organic pesticide working great!',
-      likes: 25,
-      comments: 8,
-      avatar: 'https://picsum.photos/201',
-    },
-  ]);
+  const [posts, setPosts] = useState<Post[]>([]);
 
-  // Handle new post addition
-useEffect(() => {
-  if (route.params?.newPost) {
-    setPosts(prevPosts => [{ ...route.params.newPost, comments: 0 }, ...prevPosts]); // Ensure new post has a comments field
-    navigation.setParams({ newPost: null }); // Reset param after update
-  }
-}, [route.params?.newPost]);
+  useEffect(() => {
+    loadPosts();
+  }, []);
 
+  useEffect(() => {
+    if (route.params?.newPost) {
+      const updatedPosts = [route.params.newPost, ...posts];
+      setPosts(updatedPosts);
+      savePosts(updatedPosts);
+      navigation.setParams({ newPost: null });
+    }
+  }, [route.params?.newPost]);
+
+  const loadPosts = async () => {
+    try {
+      const storedPosts = await AsyncStorage.getItem('communityPosts');
+      if (storedPosts) {
+        setPosts(JSON.parse(storedPosts));
+      }
+    } catch (error) {
+      console.error('Failed to load posts', error);
+    }
+  };
+
+  const savePosts = async (posts: Post[]) => {
+    try {
+      await AsyncStorage.setItem('communityPosts', JSON.stringify(posts));
+    } catch (error) {
+      console.error('Failed to save posts', error);
+    }
+  };
 
   const handleViewProfile = (userId: string) => {
     navigation.navigate('Profile', { userId, isEditable: false });
   };
 
-  const renderPost = ({ item }: { item: Post }) => (
-    <View style={styles.postContainer}>
-      <TouchableOpacity 
-        style={styles.postHeader}
-        onPress={() => handleViewProfile(item.userId)}
-        activeOpacity={0.7}
-      >
-        <Image source={{ uri: item.avatar }} style={styles.avatar} />
-        <View style={styles.userInfo}>
-          <Text style={styles.username}>{item.user}</Text>
-          <Text style={styles.userBadge}>Verified Farmer</Text>
-        </View>
-      </TouchableOpacity>
-      <Text style={styles.postContent}>{item.content}</Text>
-      <View style={styles.postFooter}>
-        <TouchableOpacity style={styles.interactionButton}>
-          <Icon name="thumb-up-outline" size={20} color="#666" />
-          <Text style={styles.interactionText}>{item.likes}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.interactionButton}>
-          <Icon name="comment-outline" size={20} color="#666" />
-          <Text style={styles.interactionText}>{item.comments}</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+          <Icon name="arrow-left" size={28} color="#4CAF50" />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Community Discussions</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Profile', { 
+        <TouchableOpacity onPress={() => navigation.navigate('Profile', {
           userId: 'currentUser',
-          isEditable: true 
+          isEditable: true
         })}>
           <Icon name="account-circle" size={32} color="#4CAF50" />
         </TouchableOpacity>
       </View>
-
-      {/* Posts List */}
       <FlatList
         data={posts}
-        renderItem={renderPost}
+        renderItem={({ item }) => (
+          <View style={styles.postContainer}>
+            <TouchableOpacity
+              style={styles.postHeader}
+              onPress={() => handleViewProfile(item.userId)}
+              activeOpacity={0.7}
+            >
+              <Image source={{ uri: item.avatar }} style={styles.avatar} />
+              <View style={styles.userInfo}>
+                <Text style={styles.username}>{item.user}</Text>
+                <Text style={styles.userBadge}>Verified Farmer</Text>
+              </View>
+            </TouchableOpacity>
+            <Text style={styles.postContent}>{item.content}</Text>
+            <View style={styles.postFooter}>
+              <TouchableOpacity style={styles.interactionButton}>
+                <Icon name="thumb-up-outline" size={20} color="#666" />
+                <Text style={styles.interactionText}>{item.likes}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.interactionButton}>
+                <Icon name="comment-outline" size={20} color="#666" />
+                <Text style={styles.interactionText}>{item.comments}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
       />
-
-      {/* Floating "Create Post" Button */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.newPostButton}
         onPress={() => navigation.navigate('CreatePost')}
       >

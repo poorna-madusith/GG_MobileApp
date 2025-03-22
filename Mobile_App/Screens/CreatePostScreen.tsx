@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  Image, 
-  TextInput, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  TextInput,
   Alert,
   KeyboardAvoidingView,
-  Platform
+  Platform,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
@@ -30,16 +31,16 @@ const CreatePostScreen = () => {
       'Select Photo',
       '',
       [
-        { 
-          text: 'Take Photo', 
+        {
+          text: 'Take Photo',
           onPress: () => launchCamera(options, (response) => {
             if (response.assets?.[0]?.uri) {
               setImage(response.assets[0].uri);
             }
           })
         },
-        { 
-          text: 'Choose from Gallery', 
+        {
+          text: 'Choose from Gallery',
           onPress: () => launchImageLibrary(options, (response) => {
             if (response.assets?.[0]?.uri) {
               setImage(response.assets[0].uri);
@@ -51,30 +52,41 @@ const CreatePostScreen = () => {
     );
   };
 
-const handlePost = () => {
-  if (!userName.trim()) {
-    Alert.alert('Error', 'Please enter your name');
-    return;
-  }
-  if (!image) {
-    Alert.alert('Error', 'Please select a photo');
-    return;
-  }
-
-  const newPost = {
-    id: Date.now().toString(),
-    userId: 'currentUser',
-    user: userName,
-    content: caption,
-    image,
-    likes: 0,
-    comments: 0, // Make sure this matches CommunityScreen.tsx
-    avatar: 'https://picsum.photos/200',
+  const savePostToStorage = async (newPost: any) => {
+    try {
+      const existingPosts = await AsyncStorage.getItem('communityPosts');
+      const posts = existingPosts ? JSON.parse(existingPosts) : [];
+      const updatedPosts = [newPost, ...posts];
+      await AsyncStorage.setItem('communityPosts', JSON.stringify(updatedPosts));
+    } catch (error) {
+      console.error('Error saving post:', error);
+    }
   };
 
-  navigation.navigate('Community', { newPost });
-};
+  const handlePost = async () => {
+    if (!userName.trim()) {
+      Alert.alert('Error', 'Please enter your name');
+      return;
+    }
+    if (!image) {
+      Alert.alert('Error', 'Please select a photo');
+      return;
+    }
 
+    const newPost = {
+      id: Date.now().toString(),
+      userId: 'currentUser',
+      user: userName,
+      content: caption,
+      image,
+      likes: 0,
+      comments: [],
+      avatar: 'https://picsum.photos/200',
+    };
+
+    await savePostToStorage(newPost);
+    navigation.navigate('Community', { newPost });
+  };
 
   return (
     <KeyboardAvoidingView
@@ -113,10 +125,9 @@ const handlePost = () => {
         multiline
       />
 
-      <TouchableOpacity 
-        style={styles.postButton} 
+      <TouchableOpacity
+        style={styles.postButton}
         onPress={handlePost}
-        disabled={!image || !userName}
       >
         <Text style={styles.postButtonText}>Post to Community</Text>
       </TouchableOpacity>
