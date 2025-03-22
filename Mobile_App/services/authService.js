@@ -1,4 +1,4 @@
-import { api } from './api';
+import { api, API_URL } from './api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
@@ -231,6 +231,45 @@ export const getStoredUserData = async () => {
 };
 
 /**
+ * Delete user account
+ * @returns {Promise<Object>} Result object with success status and message
+ */
+export const deleteAccount = async () => {
+  try {
+    const token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
+    
+    const response = await axios.delete(
+      `${API_URL}/auth/profile`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    if (response.data.success) {
+      await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, USER_DATA_KEY]);
+      return {
+        success: true,
+        message: 'Account deleted successfully'
+      };
+    }
+    
+    return {
+      success: false,
+      message: response.data.message || 'Failed to delete account'
+    };
+
+  } catch (error) {
+    console.error('Delete account error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Error deleting account'
+    };
+  }
+};
+
+/**
  * Update user profile
  * @param {Object} userData - User data to update
  * @returns {Promise} - Promise with update result
@@ -243,8 +282,12 @@ export const updateUserProfile = async (userData) => {
       return { success: false, message: 'Authentication required' };
     }
 
-    const response = await api.put('/auth/update-profile', userData, {
-      headers: { Authorization: `Bearer ${token}` }
+    // Fix the endpoint URL - change from '/auth/update-profile' to '/auth/profile'
+    const response = await axios.put(`${API_URL}/auth/profile`, userData, {
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
     });
 
     if (response.data.success) {
@@ -270,5 +313,6 @@ export default {
   isLoggedIn,
   logout,
   getStoredUserData,
+  deleteAccount,
   updateUserProfile
 };

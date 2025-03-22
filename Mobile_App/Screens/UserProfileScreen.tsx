@@ -91,6 +91,42 @@ const UserProfileScreen = () => {
     navigation.navigate('EditProfile', { userData });
   };
 
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to delete your account? This action cannot be undone.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              const result = await authService.deleteAccount();
+              if (result.success) {
+                Alert.alert('Success', 'Your account has been deleted successfully');
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'Login' }],
+                });
+              } else {
+                Alert.alert('Error', result.message || 'Failed to delete account');
+              }
+            } catch (error) {
+              Alert.alert('Error', 'An error occurred while deleting your account');
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -193,6 +229,13 @@ const UserProfileScreen = () => {
                   onPress={handleEditProfile}
                 >
                   <Text style={styles.editButtonText}>Edit Profile</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.deleteButton}
+                  onPress={handleDeleteAccount}
+                >
+                  <Text style={styles.deleteButtonText}>Delete Account</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -366,6 +409,18 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   editButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  deleteButton: {
+    backgroundColor: '#ef4444',
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 10,
+    marginTop: 10,
+  },
+  deleteButtonText: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: 'bold',

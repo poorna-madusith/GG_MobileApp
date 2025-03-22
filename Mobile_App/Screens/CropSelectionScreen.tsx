@@ -36,7 +36,7 @@ const CropSelectionScreen = () => {
       <View style={styles.topBar}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.navigate('Home')}
+          onPress={() => navigation.navigate('DetectionPrompt')}
         >
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
@@ -203,8 +203,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   // Remove these background-related styles
-  backgroundPattern: null,
-  treeIcon: null,
+backgroundPattern: {},
+  treeIcon: {},
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
