@@ -1,500 +1,346 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  FlatList,
-  Alert,
-} from 'react-native';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, Text, View, Linking, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import BackgroundPattern from '../components/BackgroundPattern';
-import * as authService from '../services/authService';
+import Calendar from '../components/Calendar';
+import LinearGradient from 'react-native-linear-gradient';
+import articles from '../articles';
 
-const DashboardScreen = ({ navigation }) => {
-  const [totalScans, setTotalScans] = useState(0);
-  const [recentScans, setRecentScans] = useState([]);
-  const [userActivity, setUserActivity] = useState({
-    activeUsers: 0,
-    scansPerUser: 0,
-    userEngagement: 0,
-  });
-  const [diseaseTrends, setDiseaseTrends] = useState([]); // New state for disease trends
-  const [pestActivity, setPestActivity] = useState([]); // New state for pest activity
-  const [communityEngagement, setCommunityEngagement] = useState([]); // New state for community posts
-  const [exportReadiness, setExportReadiness] = useState([]); // New state for export readiness
-  const [loading, setLoading] = useState(true);
+const DashboardScreen = () => {
+  const [showVideos, setShowVideos] = useState(false);
+  const [showNews, setShowNews] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [showModernTech, setShowModernTech] = useState(false);
+  const [showArticles, setShowArticles] = useState(false); 
 
-  useEffect(() => {
-    fetchScanData();
-    fetchDiseaseTrends();
-    fetchPestActivity();
-    fetchCommunityEngagement();
-    fetchExportReadiness();
-  }, []);
+  //Data for tutorial videos
+  const tutorialVideos = [
+    { id: 'G9kpiZa72WI', title: 'Pest Control Techniques' },
+    { id: '7HnLVYhvars', title: 'Identifying Crop Diseases' },
+    { id: 'l36uoyUke-s', title: 'Modern Farming Technologies' }, 
+  ];
 
-  const fetchScanData = async () => {
-    try {
-      setLoading(true);
-      const response = await authService.getScanData(); 
-      if (response.success) {
-        setTotalScans(response.totalScans);
-        setRecentScans(response.recentScans || []);
-        setUserActivity(response.userActivity || {
-          activeUsers: 0,
-          scansPerUser: 0,
-          userEngagement: 0,
-        });
-      } else {
-        Alert.alert('Error', response.message || 'Failed to fetch scan data');
-      }
-    } catch (error) {
-      console.error('Error fetching scan data:', error);
-      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+  // Data for modern technology videos
+  const modernTechVideos = [
+    { id: 'l36uoyUke-s', title: 'Advanced Farming Techniques' },
+  ];
+
+  // Data for news
+  const newsItems = [
+    {
+      id: 1,
+      title: 'New Pest Outbreak in Midwest',
+      description: 'Farmers report a new pest affecting corn crops. Experts recommend immediate action.',
+    },
+    {
+      id: 2,
+      title: 'Tomato Blight Spreading Rapidly',
+      description: 'Tomato crops in the region are under threat from a fast-spreading blight.',
+    },
+    {
+      id: 3,
+      title: 'Government Issues Advisory for Wheat Farmers',
+      description: 'A new advisory has been issued to combat rust disease in wheat crops.',
+    },
+  ];
+
+  // To open YouTube video
+  const openYouTubeVideo = (videoId) => {
+    const url = 'https://www.youtube.com/watch?v=${videoId}';
+    Linking.openURL(url).catch((err) =>
+      console.error('Failed to open URL:', err)
+    );
   };
 
-  const fetchDiseaseTrends = async () => {
-    try {
-      const response = await authService.getDiseaseTrends();
-      if (response.success) {
-        setDiseaseTrends(response.diseaseTrends || []);
-      } else {
-        Alert.alert('Error', response.message || 'Failed to fetch disease trends');
-      }
-    } catch (error) {
-      console.error('Error fetching disease trends:', error);
-      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
-    }
-  };
-
-  const fetchPestActivity = async () => {
-    try {
-      const response = await authService.getPestActivity(); 
-      if (response.success) {
-        setPestActivity(response.pestActivity || []);
-      } else {
-        Alert.alert('Error', response.message || 'Failed to fetch pest activity');
-      }
-    } catch (error) {
-      console.error('Error fetching pest activity:', error);
-      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
-    }
-  };
-
-  const fetchCommunityEngagement = async () => {
-    try {
-      const response = await authService.getCommunityEngagement(); 
-      if (response.success) {
-        setCommunityEngagement(response.communityEngagement || []);
-      } else {
-        Alert.alert('Error', response.message || 'Failed to fetch community engagement');
-      }
-    } catch (error) {
-      console.error('Error fetching community engagement:', error);
-      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
-    }
-  };
-
-  const fetchExportReadiness = async () => {
-    try {
-      const response = await authService.getExportReadiness(); 
-      if (response.success) {
-        setExportReadiness(response.exportReadiness || []);
-      } else {
-        Alert.alert('Error', response.message || 'Failed to fetch export readiness');
-      }
-    } catch (error) {
-      console.error('Error fetching export readiness:', error);
-      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
-    }
-  };
-
-  const handleStartNewScan = () => {
-    navigation.navigate('CropSelection'); // Navigate to the scan screen
-  };
-
-  const handleViewReports = () => {
-    navigation.navigate('Reports'); // Navigate to the reports screen
-  };
-
-  const renderRecentScanItem = ({ item }) => (
-    <View style={styles.recentScanItem}>
-      <Text style={styles.recentScanText}>{item.date}</Text>
-      <Text style={styles.recentScanText}>{item.type}</Text>
-    </View>
-  );
-
-  const renderDiseaseTrendItem = ({ item }) => (
-    <View style={styles.diseaseTrendItem}>
-      <Text style={styles.diseaseTrendText}>{item.disease}</Text>
-      <Text style={styles.diseaseTrendText}>{item.cases} cases</Text>
-    </View>
-  );
-
-  const renderPestActivityItem = ({ item }) => (
-    <View style={styles.pestActivityItem}>
-      <Text style={styles.pestActivityText}>{item.pest}</Text>
-      <Text style={styles.pestActivityText}>{item.occurrences} occurrences</Text>
-    </View>
-  );
-
-  const renderCommunityPostItem = ({ item }) => (
-    <View style={styles.communityPostItem}>
-      <Text style={styles.communityPostText}>{item.user}</Text>
-      <Text style={styles.communityPostText}>{item.post}</Text>
-    </View>
-  );
-
-  const renderExportReadinessItem = ({ item }) => (
-    <View style={styles.exportReadinessItem}>
-      <Text style={styles.exportReadinessText}>{item.crop}</Text>
-      <Text style={styles.exportReadinessText}>{item.status}</Text>
-    </View>
-  );
 
   return (
-    <View style={styles.container}>
-      <BackgroundPattern opacity={0.8} />
+    <LinearGradient
+      colors={['#FFFFFF', '#FFFFFF']} 
+      style={styles.container}
+    >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Top Bar */}
-        <View style={styles.topBar}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
+        {/* Header */}
+        <LinearGradient
+          colors={['#4CAF50', '#81C784']}
+          style={styles.header}
+        >
+          <Text style={styles.headerText}>Dashboard</Text>
+        </LinearGradient>
+
+        {/*Farming Calendar Button*/}
+        <TouchableOpacity
+          style={styles.modernButton}
+          onPress={() => setShowCalendar(!showCalendar)}
+        >
+          <LinearGradient
+            colors={['#4CAF50', '#81C784']}
+            style={styles.gradientButton}
           >
-            <Icon name="arrow-back" size={24} color="#000" />
-          </TouchableOpacity>
-          <Text style={styles.title}>Dashboard</Text>
-        </View>
+            <Icon name="event" size={20} color="white" style={styles.buttonIcon} />
+            <Text style={styles.modernButtonText}>
+              {showCalendar ? 'Hide Farming Calendar' : 'Show Farming Calendar'}
+            </Text>
+          </LinearGradient>
+        </TouchableOpacity>
 
-        {/* Total Scans */}
-        <View style={styles.totalScansContainer}>
-          <Text style={styles.totalScansLabel}>Total Scans</Text>
-          {loading ? (
-            <ActivityIndicator size="large" color="#0000ff" />
-          ) : (
-            <Text style={styles.totalScansValue}>{totalScans}</Text>
-          )}
-        </View>
+        {/* Custom Calendar */}
+        {showCalendar && (
+          <View style={styles.calendarContainer}>
+            <Calendar />
+          </View>
+        )}
 
-        {/* Quick Actions */}
-        <View style={styles.quickActionsContainer}>
-          <TouchableOpacity
-            style={styles.quickActionButton}
-            onPress={handleStartNewScan}
+        {/* Tutorial Videos */}
+        <TouchableOpacity
+          style={styles.modernButton}
+          onPress={() => setShowVideos(!showVideos)}
+        >
+          <LinearGradient
+            colors={['#4CAF50', '#81C784']}
+            style={styles.gradientButton}
           >
-            <Text style={styles.quickActionText}>Start New Scan</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.quickActionButton}
-            onPress={handleViewReports}
+            <Icon name="ondemand-video" size={20} color="white" style={styles.buttonIcon} />
+            <Text style={styles.modernButtonText}>
+              {showVideos ? 'Hide Tutorial Videos' : 'Show Tutorial Videos'}
+            </Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        {/* Tutorial Videos Section */}
+        {showVideos && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Tutorial Videos</Text>
+            {tutorialVideos.map((video) => (
+              <TouchableOpacity
+                key={video.id}
+                style={styles.videoItem}
+                onPress={() => openYouTubeVideo(video.id)}
+              >
+                <Text style={styles.videoTitle}>{video.title}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        {/* Modern Technologies*/}
+        <TouchableOpacity
+          style={styles.modernButton}
+          onPress={() => setShowModernTech(!showModernTech)}
+        >
+          <LinearGradient
+            colors={['#4CAF50', '#81C784']}
+            style={styles.gradientButton}
           >
-            <Text style={styles.quickActionText}>View Reports</Text>
-          </TouchableOpacity>
-        </View>
+            <Icon name="precision-manufacturing" size={20} color="white" style={styles.buttonIcon} />
+            <Text style={styles.modernButtonText}>
+              {showModernTech ? 'Hide Modern Technologies' : 'Show Modern Technologies'}
+            </Text>
+          </LinearGradient>
+        </TouchableOpacity>
 
-        {/* User Activity */}
-        <View style={styles.userActivityContainer}>
-          <Text style={styles.sectionTitle}>User Activity</Text>
-          {loading ? (
-            <ActivityIndicator size="small" color="#0000ff" />
-          ) : (
-            <>
-              <View style={styles.userActivityItem}>
-                <Text style={styles.userActivityLabel}>Active Users</Text>
-                <Text style={styles.userActivityValue}>
-                  {userActivity.activeUsers}
-                </Text>
+        {/* Modern Technologies Section */}
+        {showModernTech && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Modern Technologies</Text>
+            {modernTechVideos.map((video) => (
+              <TouchableOpacity
+                key={video.id}
+                style={styles.videoItem}
+                onPress={() => openYouTubeVideo(video.id)}
+              >
+                <Text style={styles.videoTitle}>{video.title}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        {/* Latest News*/}
+        <TouchableOpacity
+          style={styles.modernButton}
+          onPress={() => setShowNews(!showNews)}
+        >
+          <LinearGradient
+            colors={['#4CAF50', '#81C784']}
+            style={styles.gradientButton}
+          >
+            <Icon name="article" size={20} color="white" style={styles.buttonIcon} />
+            <Text style={styles.modernButtonText}>
+              {showNews ? 'Hide Latest News' : 'Show Latest News'}
+            </Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        {/* News Section */}
+        {showNews && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Latest News</Text>
+            {newsItems.map((news) => (
+              <View key={news.id} style={styles.newsItem}>
+                <Text style={styles.newsTitle}>{news.title}</Text>
+                <Text style={styles.newsDescription}>{news.description}</Text>
               </View>
-              <View style={styles.userActivityItem}>
-                <Text style={styles.userActivityLabel}>Scans Per User</Text>
-                <Text style={styles.userActivityValue}>
-                  {userActivity.scansPerUser}
-                </Text>
+            ))}
+          </View>
+        )}
+
+        {/* Articles */}
+        <TouchableOpacity
+          style={styles.modernButton}
+          onPress={() => setShowArticles(!showArticles)}
+        >
+          <LinearGradient
+            colors={['#4CAF50', '#81C784']}
+            style={styles.gradientButton}
+          >
+            <Icon name="library-books" size={20} color="white" style={styles.buttonIcon} />
+            <Text style={styles.modernButtonText}>
+              {showArticles ? 'Hide Articles' : 'Show Articles'}
+            </Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        {/* Articles Section */}
+        {showArticles && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Articles</Text>
+            {articles.map((article) => (
+              <View key={article.id} style={styles.article}>
+                <Text style={styles.articleTitle}>{article.title}</Text>
+                <Text style={styles.articleText}>{article.content}</Text>
               </View>
-              <View style={styles.userActivityItem}>
-                <Text style={styles.userActivityLabel}>User Engagement</Text>
-                <Text style={styles.userActivityValue}>
-                  {userActivity.userEngagement}%
-                </Text>
-              </View>
-            </>
-          )}
-        </View>
-
-        {/* Recent Scans */}
-        <View style={styles.recentScansContainer}>
-          <Text style={styles.sectionTitle}>Recent Scans</Text>
-          {loading ? (
-            <ActivityIndicator size="small" color="#0000ff" />
-          ) : recentScans.length > 0 ? (
-            <FlatList
-              data={recentScans}
-              renderItem={renderRecentScanItem}
-              keyExtractor={(item) => item.id}
-              scrollEnabled={false}
-            />
-          ) : (
-            <Text style={styles.noScansText}>No recent scans found.</Text>
-          )}
-        </View>
-
-        {/* Disease Trends */}
-        <View style={styles.diseaseTrendsContainer}>
-          <Text style={styles.sectionTitle}>Disease Trends</Text>
-          {loading ? (
-            <ActivityIndicator size="small" color="#0000ff" />
-          ) : diseaseTrends.length > 0 ? (
-            <FlatList
-              data={diseaseTrends}
-              renderItem={renderDiseaseTrendItem}
-              keyExtractor={(item) => item.id}
-              scrollEnabled={false}
-            />
-          ) : (
-            <Text style={styles.noDataText}>No disease trends found.</Text>
-          )}
-        </View>
-
-        {/* Pest Activity */}
-        <View style={styles.pestActivityContainer}>
-          <Text style={styles.sectionTitle}>Pest Activity</Text>
-          {loading ? (
-            <ActivityIndicator size="small" color="#0000ff" />
-          ) : pestActivity.length > 0 ? (
-            <FlatList
-              data={pestActivity}
-              renderItem={renderPestActivityItem}
-              keyExtractor={(item) => item.id}
-              scrollEnabled={false}
-            />
-          ) : (
-            <Text style={styles.noDataText}>No pest activity found.</Text>
-          )}
-        </View>
-
-        {/* Community Engagement */}
-        <View style={styles.communityEngagementContainer}>
-          <Text style={styles.sectionTitle}>Community Engagement</Text>
-          {loading ? (
-            <ActivityIndicator size="small" color="#0000ff" />
-          ) : communityEngagement.length > 0 ? (
-            <FlatList
-              data={communityEngagement}
-              renderItem={renderCommunityPostItem}
-              keyExtractor={(item) => item.id}
-              scrollEnabled={false}
-            />
-          ) : (
-            <Text style={styles.noDataText}>No community posts found.</Text>
-          )}
-        </View>
-
-        {/* Export Readiness */}
-        <View style={styles.exportReadinessContainer}>
-          <Text style={styles.sectionTitle}>Export Readiness</Text>
-          {loading ? (
-            <ActivityIndicator size="small" color="#0000ff" />
-          ) : exportReadiness.length > 0 ? (
-            <FlatList
-              data={exportReadiness}
-              renderItem={renderExportReadinessItem}
-              keyExtractor={(item) => item.id}
-              scrollEnabled={false}
-            />
-          ) : (
-            <Text style={styles.noDataText}>No export readiness data found.</Text>
-          )}
-        </View>
+            ))}
+          </View>
+        )}
       </ScrollView>
-    </View>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
   },
   scrollContainer: {
     flexGrow: 1,
-    padding: 20,
+    paddingBottom: 20,
   },
-  topBar: {
-    flexDirection: 'row',
+  header: {
+    padding: 25,
     alignItems: 'center',
-    marginBottom: 20,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
   },
-  backButton: {
-    marginRight: 10,
-  },
-  title: {
+  headerText: {
+    color: 'white',
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#000',
+    fontFamily: 'Roboto',
   },
-  totalScansContainer: {
-    backgroundColor: 'rgba(227, 227, 227, 0.78)',
-    borderRadius: 10,
-    padding: 20,
-    marginBottom: 20,
-    alignItems: 'center',
+  modernButton: {
+    margin: 20,
+    borderRadius: 15,
+    overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
   },
-  totalScansLabel: {
-    fontSize: 18,
-    color: '#666',
-    marginBottom: 10,
-  },
-  totalScansValue: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  quickActionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  quickActionButton: {
-    backgroundColor: '#4CAF50',
-    borderRadius: 10,
+  gradientButton: {
     padding: 15,
-    flex: 1,
-    marginHorizontal: 5,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  quickActionText: {
-    color: '#fff',
+  modernButtonText: {
+    color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+    marginLeft: 10,
   },
-  userActivityContainer: {
-    backgroundColor: 'rgba(227, 227, 227, 0.72)',
-    borderRadius: 10,
-    padding: 20,
+  buttonIcon: {
+    marginRight: 10,
+  },
+  calendarContainer: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 15,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    padding: 15,
+  },
+  section: {
+    marginHorizontal: 20,
     marginBottom: 20,
+    backgroundColor: 'white',
+    borderRadius: 15,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    padding: 15,
   },
   sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+    marginBottom: 10,
+    fontFamily: 'Roboto',
+  },
+  videoItem: {
+    backgroundColor: '#f9f9f9',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    elevation: 3,
+  },
+  videoTitle: {
+    fontSize: 16,
+    color: '#333',
+    fontFamily: 'Roboto',
+  },
+  newsItem: {
+    backgroundColor: '#f9f9f9',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    elevation: 3,
+  },
+  newsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    fontFamily: 'Roboto', 
+  },
+  newsDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 5,
+    fontFamily: 'Roboto',
+  },
+  article: {
+    backgroundColor: '#f9f9f9',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    elevation: 3,
+  },
+  articleTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#000',
+    color: '#4CAF50',
     marginBottom: 10,
   },
-  userActivityItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-  },
-  userActivityLabel: {
-    fontSize: 16,
+  articleText: {
+    fontSize: 14,
     color: '#333',
-  },
-  userActivityValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  recentScansContainer: {
-    backgroundColor: 'rgba(227, 227, 227, 0.9)',
-    borderRadius: 10,
-    padding: 20,
-    marginBottom: 20,
-  },
-  recentScanItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-  },
-  recentScanText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  noScansText: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-  },
-  diseaseTrendsContainer: {
-    backgroundColor: 'rgba(227, 227, 227, 0.9)',
-    borderRadius: 10,
-    padding: 20,
-    marginBottom: 20,
-  },
-  diseaseTrendItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-  },
-  diseaseTrendText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  pestActivityContainer: {
-    backgroundColor: 'rgba(227, 227, 227, 0.9)',
-    borderRadius: 10,
-    padding: 20,
-    marginBottom: 20,
-  },
-  pestActivityItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-  },
-  pestActivityText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  communityEngagementContainer: {
-    backgroundColor: 'rgba(227, 227, 227, 0.9)',
-    borderRadius: 10,
-    padding: 20,
-    marginBottom: 20,
-  },
-  communityPostItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-  },
-  communityPostText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  exportReadinessContainer: {
-    backgroundColor: 'rgba(227, 227, 227, 0.9)',
-    borderRadius: 10,
-    padding: 20,
-    marginBottom: 20,
-  },
-  exportReadinessItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-  },
-  exportReadinessText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  noDataText: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
+    lineHeight: 20,
   },
 });
 

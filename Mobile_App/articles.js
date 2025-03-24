@@ -1,0 +1,14 @@
+const articles = [
+    {
+      id: 1,
+      title: 'Plant Diseases and Sustainable Agriculture',
+      content: `Plant diseases are a major threat to global food security. They can cause significant losses in crop yields, and can also lead to the spread of harmful toxins. The pathogenesis of plant diseases is a complex process that involves the interplay between pathogens, hosts, and their environment. The ever-evolving nature of pathogens and the effects of climate change on plant health make it essential to develop effective disease control strategies. A multi-pronged approach to disease control is imperative. Integrated pest management (IPM) strategies that incorporate cultural practices, biological controls, and targeted chemical interventions can help to minimize environmental impact while effectively tackling crop diseases. Breeding disease-resistant cultivars through modern biotechnological tools is another avenue for curtailing pathogenesis and reducing reliance on chemical treatments. Global collaboration is also essential for sharing insights, data, and successful strategies to help vulnerable regions fortify their defenses against emerging threats. Recent research plays a pivotal role in disseminating best practices among farmers, enabling them to make informed decisions and implementing preventive measures. By investing in research, technology, and international cooperation, humanity can cultivate resilience in agriculture and surmount the challenges posed by plant diseases.`,
+    },
+    {
+      id: 2,
+      title: 'The Damage to Plants and Pest Control',
+      content: `The damage to plants caused by competition from weeds and by other pests including viruses, bacteria, fungi, and insects greatly impairs their productivity and in some instances can totally destroy a crop. Today, dependable crop yields are obtained by using disease-resistant varieties, biological control practices, and by applying pesticides to control plant diseases, insects, weeds, and other pests. In 1983, $1.3 billion was spent on pesticides—excluding herbicides—to protect and limit the damage to crops from plant diseases, nematodes, and insects. The potential crop losses in the absence of pesticide use greatly exceeds that value. For about 100 years, breeding for disease resistance has been an important component of agricultural productivity worldwide. But the successes achieved by plant breeding are largely empirical and can be ephemeral. That is, because of a lack of basic information about the function of genes for resistance, studies are often random rather than specifically targeted explorations. In addition, any results can be short-lived because of the changing nature of pathogens and other pests as new genetic information is introduced into complex agroecological systems.`,
+    },
+  ];
+  
+  export default articles;
