@@ -100,96 +100,206 @@ export default function PestDetection() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Icon name="arrow-back" size={24} color="black" />
-      </TouchableOpacity>
-      <Text style={styles.title}>Pest Detection</Text>
-      {!mode ? (
-        <View>
-          <TouchableOpacity style={styles.button} onPress={() => setMode("image")}>
-            <Icon name="photo" size={24} color="white" />
-            <Text style={styles.buttonText}>Image</Text>
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <View style={styles.container}>
+        <View style={styles.topBar}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backArrow}>←</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={() => setMode("video")}>
-            <Icon name="videocam" size={24} color="white" />
-            <Text style={styles.buttonText}>Video</Text>
-          </TouchableOpacity>
+          <Text style={styles.title}>Pest Detection</Text>
         </View>
-      ) : (
-        <View>
-          <TouchableOpacity style={styles.button} onPress={() => handleMediaPick(mode)}>
-            <Icon name="folder" size={24} color="white" />
-            <Text style={styles.buttonText}>Select {mode}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={() => handleMediaCapture(mode)}>
-            <Icon name="camera" size={24} color="white" />
-            <Text style={styles.buttonText}>Capture {mode}</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-      {file && (
-        <>
-          <Image source={{ uri: file.uri }} style={styles.imagePreview} />
-          <TouchableOpacity style={styles.button} onPress={handleUpload} disabled={loading}>
-            <Text style={styles.buttonText}>{loading ? "Detecting..." : "Detect Pest"}</Text>
-          </TouchableOpacity>
-          {loading && <ActivityIndicator size="large" color="#0000ff" />}
-          {prediction && (
-            <View style={styles.resultBox}>
-              <Text style={styles.resultText}>Prediction: {prediction}</Text>
-              <Text style={styles.resultText}>Confidence: {confidence?.toFixed(2)}%</Text>
-            </View>
+
+        <View style={styles.selectionBox}>
+          {!mode ? (
+            <>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => setMode("image")}
+              >
+                <Icon name="photo" size={32} color="#000" />
+                <Text style={styles.iconButtonText}>Image</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => setMode("video")}
+              >
+                <Icon name="videocam" size={32} color="#000" />
+                <Text style={styles.iconButtonText}>Video</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => handleMediaPick(mode)}
+              >
+                <Icon name="folder" size={32} color="#000" />
+                <Text style={styles.iconButtonText}>Select {mode}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => handleMediaCapture(mode)}
+              >
+                <Icon name="camera" size={32} color="#000" />
+                <Text style={styles.iconButtonText}>Capture {mode}</Text>
+              </TouchableOpacity>
+            </>
           )}
-        </>
-      )}
+        </View>
+
+        {file && (
+          <View style={styles.preview}>
+            <Image source={{ uri: file.uri }} style={styles.imagePreview} />
+            <TouchableOpacity
+              style={styles.selectButton}
+              onPress={handleUpload}
+              disabled={loading}
+            >
+              <Text style={styles.selectButtonText}>
+                {loading ? "Detecting..." : "Detect Pest"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {loading && <ActivityIndicator size="large" color="#0000ff" />}
+        
+        {prediction && (
+          <View style={styles.resultBox}>
+            <Text style={styles.resultText}>Prediction: {prediction}</Text>
+            <Text style={styles.resultText}>
+              Confidence: {confidence?.toFixed(2)}%
+            </Text>
+          </View>
+        )}
+
+        {file && (
+          <TouchableOpacity
+            style={styles.clearButton}
+            onPress={() => {
+              setFile(null);
+              setPrediction(null);
+              setConfidence(null);
+            }}
+          >
+            <Text style={styles.clearButtonText}>Clear</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
+    flex: 1,
+    backgroundColor: "#FFFFFF",
     alignItems: "center",
-    padding: 16,
+    paddingTop: 20,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+  },
+  topBar: {
+    flexDirection: "column",
+    alignItems: "center",
+    marginBottom: 20,
+    width: "90%",
+    marginTop: 40,
   },
   backButton: {
-    position: "absolute",
-    top: 20,
-    left: 20,
-    zIndex: 10,
+    position: 'absolute',
+    left: 10,
+    top: -10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backArrow: {
+    fontSize: 35,
+    fontWeight: 'bold',
+    color: '#000000',
+    textAlign: 'center',
+    lineHeight: 35,
+    includeFontPadding: false,
+    padding: 0,
+    margin: 0,
   },
   title: {
-    fontSize: 24,
+    fontSize: 25,
+    color: "#000",
+    fontFamily: "BebasNeue-Regular",
+    marginTop: 40,
     fontWeight: "bold",
-    marginBottom: 16,
   },
-  button: {
-    backgroundColor: "green",
-    padding: 10,
-    borderRadius: 5,
-    marginVertical: 10,
-    flexDirection: "row",
-    alignItems: "center",
+  selectionBox: {
+    backgroundColor: 'rgba(227, 227, 227, 0.9)',
+    width: "90%",
+    borderRadius: 10,
+    padding: 20,
+    marginBottom: 20,
+    zIndex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
   },
-  buttonText: {
-    color: "white",
+  iconButton: {
+    alignItems: 'center',
+    padding: 15,
+  },
+  iconButtonText: {
+    marginTop: 5,
     fontSize: 16,
-    marginLeft: 10,
+    fontFamily: "RobotoCondensed-Bold",
+    color: "#000000",
+  },
+  preview: {
+    marginTop: 20,
+    alignItems: "center",
   },
   imagePreview: {
     width: 200,
     height: 200,
-    marginVertical: 10,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  selectButton: {
+    backgroundColor: "#BFFCBF",
+    paddingVertical: 15,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    width: "90%",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.27,
+    shadowRadius: 4.65,
+    elevation: 6,
+  },
+  selectButtonText: {
+    fontSize: 16,
+    color: "#000000",
+    fontFamily: "RobotoCondensed-Bold",
+    fontWeight: "600",
   },
   resultBox: {
     marginTop: 20,
-    backgroundColor: "rgba(223, 242, 236, 0.9)",
+    backgroundColor: 'rgba(223, 242, 236, 0.9)',
     padding: 15,
     borderRadius: 10,
     width: "90%",
+    zIndex: 1,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
@@ -198,5 +308,28 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#38761D",
+    fontFamily: "RobotoCondensed-Bold",
   },
+  clearButton: {
+    marginTop: 20,
+    marginBottom: 10,
+    backgroundColor: "#F8D7DA",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  clearButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#721C24",
+    fontFamily: "RobotoCondensed-Bold",
+  }
 });
